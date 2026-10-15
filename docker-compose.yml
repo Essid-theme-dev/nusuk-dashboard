@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nusuk-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: nusuk
+      POSTGRES_PASSWORD: nusuk_secret
+      POSTGRES_DB: nusuk
+    volumes:
+      - nusuk_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nusuk -d nusuk"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  nusuk_pg_data:
