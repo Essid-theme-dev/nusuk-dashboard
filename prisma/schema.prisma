@@ -1,0 +1,281 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OmraStatus {
+  available
+  full
+  closed
+}
+
+enum PilgrimStatus {
+  registered
+  confirmed
+  visa_pending
+  cancelled
+}
+
+model OmraPackage {
+  id            String       @id @default(cuid())
+  slug          String       @unique
+  titleFr       String
+  titleAr       String
+  descriptionFr String       @db.Text
+  descriptionAr String       @db.Text
+  price         Int
+  currency      String       @default("DZD")
+  durationDays  Int
+  departureDate DateTime     @db.Date
+  returnDate    DateTime     @db.Date
+  hotelMakkah   String
+  hotelMadinah  String
+  includesFr    String[]
+  includesAr    String[]
+  image         String
+  guideFr       String?
+  guideAr       String?
+  guidePhone    String?
+  status        OmraStatus   @default(available)
+  maxPilgrims   Int
+  featured      Boolean      @default(false)
+  pilgrims      Pilgrim[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("omra_packages")
+}
+
+model Pilgrim {
+  id                 String        @id @default(cuid())
+  firstName          String
+  lastName           String
+  firstNameAr        String?
+  lastNameAr         String?
+  email              String
+  phone              String
+  dateOfBirth        DateTime      @db.Date
+  passportNumber     String        @unique
+  passportExpiry     DateTime      @db.Date
+  passportIssueDate  DateTime      @db.Date
+  passportIssuePlace String
+  photoUrl           String?       @db.Text
+  passportImageUrl   String?       @db.Text
+  omraId             String
+  omra               OmraPackage   @relation(fields: [omraId], references: [id], onDelete: Cascade)
+  status             PilgrimStatus @default(registered)
+  emergencyContact   String
+  emergencyPhone     String
+  notes              String?       @db.Text
+  payments           PilgrimPayment[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@map("pilgrims")
+}
+
+model PilgrimPayment {
+  id        String   @id @default(cuid())
+  pilgrimId String
+  pilgrim   Pilgrim  @relation(fields: [pilgrimId], references: [id], onDelete: Cascade)
+  amount    Int
+  note      String?
+  paidAt    DateTime @default(now()) @db.Date
+  createdAt DateTime @default(now())
+
+  @@map("pilgrim_payments")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("admin_users")
+}
+
+model AgencySettings {
+  id          String   @id @default("default")
+  nameFr      String   @default("Nusuk Services Touristiques")
+  nameAr      String   @default("نسك للخدمات السياحية")
+  email       String   @default("contact@nusuk-dz.com")
+  phone       String   @default("+213 555 000 000")
+  addressFr   String   @default("Alger, Algérie")
+  addressAr   String   @default("الجزائر، الجزائر")
+  hoursFr     String   @default("Lun - Sam : 9h - 18h")
+  hoursAr     String   @default("الإثنين - السبت: 9ص - 6م")
+  facebookUrl String?
+  taglineFr   String?
+  taglineAr   String?
+  logoUrl     String?   @default("/logo.jpg")
+  primaryColor    String @default("#111111")
+  accentColor     String @default("#c87941")
+  backgroundColor String @default("#ffffff")
+  updatedAt   DateTime @updatedAt
+
+  @@map("agency_settings")
+}
+
+model HeroSlide {
+  id          String   @id @default(cuid())
+  badgeFr     String?
+  badgeAr     String?
+  titleFr     String
+  titleAr     String
+  subtitleFr  String   @db.Text
+  subtitleAr  String   @db.Text
+  image       String
+  videoUrl    String?
+  ctaLabelFr  String   @default("Découvrir")
+  ctaLabelAr  String   @default("اكتشف")
+  ctaLink     String   @default("/omra")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("hero_slides")
+}
+
+model StatCounter {
+  id        String  @id @default(cuid())
+  value     String
+  suffix    String?
+  labelFr   String
+  labelAr   String
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+
+  @@map("stat_counters")
+}
+
+model FeatureBlock {
+  id        String  @id @default(cuid())
+  icon      String  @default("star")
+  titleFr   String
+  titleAr   String
+  descFr    String  @db.Text
+  descAr    String  @db.Text
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+
+  @@map("feature_blocks")
+}
+
+model Testimonial {
+  id          String  @id @default(cuid())
+  nameFr      String
+  nameAr      String
+  locationFr  String?
+  locationAr  String?
+  textFr      String  @db.Text
+  textAr      String  @db.Text
+  avatar      String?
+  rating      Int     @default(5)
+  sortOrder   Int     @default(0)
+  active      Boolean @default(true)
+
+  @@map("testimonials")
+}
+
+model FaqItem {
+  id         String  @id @default(cuid())
+  questionFr String
+  questionAr String
+  answerFr   String  @db.Text
+  answerAr   String  @db.Text
+  sortOrder  Int     @default(0)
+  active     Boolean @default(true)
+
+  @@map("faq_items")
+}
+
+model Destination {
+  id         String  @id @default(cuid())
+  nameFr     String
+  nameAr     String
+  descFr     String? @db.Text
+  descAr     String? @db.Text
+  image      String
+  tourCount  Int     @default(0)
+  link       String?
+  sortOrder  Int     @default(0)
+  active     Boolean @default(true)
+
+  @@map("destinations")
+}
+
+model GalleryImage {
+  id        String  @id @default(cuid())
+  image     String
+  captionFr String?
+  captionAr String?
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+
+  @@map("gallery_images")
+}
+
+model VideoBlock {
+  id         String  @id @default(cuid())
+  titleFr    String
+  titleAr    String
+  descFr     String? @db.Text
+  descAr     String? @db.Text
+  videoUrl   String
+  thumbnail  String
+  sortOrder  Int     @default(0)
+  active     Boolean @default(true)
+
+  @@map("video_blocks")
+}
+
+model Achievement {
+  id       String  @id @default(cuid())
+  titleFr  String
+  titleAr  String
+  orgFr    String
+  orgAr    String
+  year     String
+  sortOrder Int    @default(0)
+  active   Boolean @default(true)
+
+  @@map("achievements")
+}
+
+model PromoBanner {
+  id         String  @id @default(cuid())
+  titleFr    String
+  titleAr    String
+  subtitleFr String? @db.Text
+  subtitleAr String? @db.Text
+  image      String?
+  ctaFr      String  @default("Réserver")
+  ctaAr      String  @default("احجز")
+  ctaLink    String  @default("/contact")
+  style      String  @default("gold")
+  sortOrder  Int     @default(0)
+  active     Boolean @default(true)
+
+  @@map("promo_banners")
+}
